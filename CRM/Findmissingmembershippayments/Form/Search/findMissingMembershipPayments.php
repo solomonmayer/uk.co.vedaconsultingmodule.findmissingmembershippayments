@@ -119,7 +119,7 @@ class CRM_Findmissingmembershippayments_Form_Search_findMissingMembershipPayment
   function where($includeContactIDs = FALSE) {
     //`$params = array();
     $financialTypeId = $_POST['financial_type_id'];
-    return " contribution_b.financial_type_id = $financialTypeId";
+    return " contribution_b.financial_type_id = $financialTypeId AND membership_payment.contribution_id IS NULL";
   }
 
   /**
