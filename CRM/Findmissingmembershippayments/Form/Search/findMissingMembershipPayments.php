@@ -18,15 +18,12 @@ class CRM_Findmissingmembershippayments_Form_Search_findMissingMembershipPayment
   function buildForm(&$form) {
     CRM_Utils_System::setTitle(ts('Find Missing Membership Payments'));
     
-    $afinancialTypes = CRM_Contribute_PseudoConstant::financialType();
-    foreach ($afinancialTypes as $key => $value) {
-      $financialTypes[$key] = $value;
-    }
+    $financialTypes = array(' ' => ts('- select financial Type - ')) +CRM_Contribute_PseudoConstant::financialType();
     $form->addElement('select', 'financial_type_id', ts('Financial Type'), $financialTypes, TRUE);
 
     // Optionally define default search values
     $form->setDefaults(array(
-      'financial_type_id' => 2,
+      'financial_type_id' => 'NULL',
     ));
 
     /**
@@ -101,7 +98,8 @@ class CRM_Findmissingmembershippayments_Form_Search_findMissingMembershipPayment
    */
   
   function from() {
-      return "
+    
+    return "
       FROM      civicrm_contact contact_a
       LEFT JOIN civicrm_contribution contribution_b ON ( contribution_b.contact_id = contact_a.id )
       LEFT JOIN civicrm_financial_type financial_type ON ( contribution_b.financial_type_id = financial_type.id )
@@ -110,6 +108,7 @@ class CRM_Findmissingmembershippayments_Form_Search_findMissingMembershipPayment
                                AND option_group.id = option_value.option_group_id )
       LEFT JOIN civicrm_membership_payment membership_payment  ON ( membership_payment.contribution_id = contribution_b.id)
       ";
+    
   }
   /**
    * Construct a SQL WHERE clause
@@ -117,9 +116,17 @@ class CRM_Findmissingmembershippayments_Form_Search_findMissingMembershipPayment
    * @return string, sql fragment with conditional expressions
    */
   function where($includeContactIDs = FALSE) {
-    //`$params = array();
-    $financialTypeId = $_POST['financial_type_id'];
-    return " contribution_b.financial_type_id = $financialTypeId AND membership_payment.contribution_id IS NULL";
+    $financialType = CRM_Utils_Array::value('financial_type_id',
+      $this->_formValues
+    );
+    if ($financialType == " " ) {
+      return "membership_payment.contribution_id IS NULL";
+    }
+
+    if ($financialType) {
+      return "contribution_b.financial_type_id = {$financialType} AND membership_payment.contribution_id IS NULL";
+    }
+
   }
 
   /**
